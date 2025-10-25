@@ -1,6 +1,6 @@
 # Gmail Invoice Automation Monorepo
 
-This repository starts a monorepo that orchestrates invoice extraction from two Gmail accounts, forwards the PDF attachments to an OCR/AI agent, and archives the structured output in Firebase.
+This repository starts a monorepo that orchestrates invoice extraction from two Gmail accounts, forwards the PDF attachments through n8n's AI Agent node, and archives the structured output in Firebase.
 
 ## Repository layout
 
@@ -25,7 +25,7 @@ The `Daily Gmail Invoice Orchestration` workflow is designed to be imported dire
 2. Build a Gmail search query from the supplier list (`packages/config/suppliers.yaml`).
 3. Search for PDF invoices with matching supplier labels/emails in **two** Gmail accounts.
 4. Flatten every PDF attachment into individual items.
-5. Send each PDF to an external AI agent that specializes in OCR/invoice parsing.
+5. Convert each PDF to base64 and send it to the built-in **AI Agent** node (backed by the connected OpenAI chat model) to extract structured invoice details.
 6. Merge the AI response with the original metadata and store the result in Firebase/Firestore for history.
 
 ### Required credentials
@@ -34,7 +34,8 @@ The `Daily Gmail Invoice Orchestration` workflow is designed to be imported dire
 | ---- | ---------- | ------- |
 | `Fetch Gmail A` | **Gmail OAuth2** named `Gmail Account A` | OAuth connection to the first Gmail inbox. |
 | `Fetch Gmail B` | **Gmail OAuth2** named `Gmail Account B` | OAuth connection to the second Gmail inbox. |
-| `Send to AI Agent` | **HTTP Basic Auth** named `AI Agent Credentials` | Auth headers for the OCR/AI endpoint. |
+| `OpenAI Chat Model` | **OpenAI API** named `OpenAI Account` | API key and optional base URL for the chat model used by the AI Agent. |
+| `Extract Invoice with AI Agent` | _Inherits the connected chat model_ | No additional credentials—ensure the chat model node is connected. |
 | `Store in Firebase` | Bearer token header (`FIREBASE_BEARER_TOKEN`) | Short-lived Google OAuth token for the Firestore REST API. |
 
 Configure these credentials inside your n8n instance after importing the workflow.
@@ -43,7 +44,7 @@ Configure these credentials inside your n8n instance after importing the workflo
 
 | Variable | Description |
 | -------- | ----------- |
-| `AI_AGENT_URL` | Fully qualified URL of your invoice extraction endpoint. Defaults to `https://api.example.com/invoices:extract` if unset. |
+| `AI_AGENT_MODEL` | Optional override for the OpenAI chat model ID (defaults to `gpt-4.1-mini`). |
 | `FIREBASE_PROJECT_ID` | Firebase project identifier used to build the Firestore REST URL. |
 | `FIREBASE_BEARER_TOKEN` | OAuth 2.0 access token with permission to write to Firestore. Injected into the Authorization header. |
 

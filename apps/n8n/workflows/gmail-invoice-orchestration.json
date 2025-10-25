@@ -217,31 +217,6 @@
     },
     {
       "parameters": {
-        "requestMethod": "POST",
-        "url": "={{$env.AI_AGENT_URL || 'https://api.example.com/invoices:extract'}}",
-        "sendBinaryData": true,
-        "binaryPropertyName": "data",
-        "jsonParameters": true,
-        "options": {
-          "bodyContentType": "json",
-          "responseFormat": "json"
-        },
-        "bodyParametersJson": "={\"supplier_hint\": $json.supplierHint, \"message_id\": $json.messageId, \"gmail_account\": $json.gmailAccount, \"subject\": $json.subject, \"run_id\": $json.runId}"
-      },
-      "id": "HTTP_AI_Agent",
-      "name": "Send to AI Agent",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 2,
-      "position": [
-        1600,
-        180
-      ],
-      "credentials": {
-        "httpBasicAuth": "AI Agent Credentials"
-      }
-    },
-    {
-      "parameters": {
         "mode": "mergeByIndex"
       },
       "id": "Merge_AI_and_Metadata",
@@ -255,7 +230,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const projectId = $env.FIREBASE_PROJECT_ID || 'your-project-id';\nconst collectionPath = `projects/${projectId}/databases/(default)/documents/invoiceHistory`;\n\nreturn items.map(item => ({\n  json: {\n    firestoreEndpoint: `https://firestore.googleapis.com/v1/${collectionPath}?documentId=${encodeURIComponent(item.json.message_id || item.json.messageId)}`,\n    payload: {\n      fields: {\n        messageId: { stringValue: item.json.message_id || item.json.messageId },\n        gmailAccount: { stringValue: item.json.gmail_account || item.json.gmailAccount || '' },\n        supplierHint: { stringValue: item.json.supplier_hint || item.json.supplierHint || '' },\n        subject: { stringValue: item.json.subject || '' },\n        runId: { stringValue: item.json.run_id || item.json.runId || '' },\n        processedAt: { timestampValue: new Date().toISOString() },\n        aiExtraction: { mapValue: { fields: Object.fromEntries(Object.entries(item.json).filter(([key]) => !['message_id','messageId','gmail_account','gmailAccount','supplier_hint','supplierHint','subject','run_id','runId','firestoreEndpoint','payload'].includes(key)).map(([key, value]) => ([key, { stringValue: typeof value === 'string' ? value : JSON.stringify(value) }])) ) } }\n      }\n    }\n  }\n}));"
+        "functionCode": "const projectId = $env.FIREBASE_PROJECT_ID || 'your-project-id';\nconst collectionPath = `projects/${projectId}/databases/(default)/documents/invoiceHistory`;\n\nfunction toFirestoreValue(value) {\n  if (value === null || value === undefined) {\n    return { nullValue: null };\n  }\n  if (typeof value === 'number') {\n    return { doubleValue: value };\n  }\n  if (typeof value === 'boolean') {\n    return { booleanValue: value };\n  }\n  if (typeof value === 'string') {\n    return { stringValue: value };\n  }\n  if (Array.isArray(value)) {\n    return { arrayValue: { values: value.map((entry) => toFirestoreValue(entry)) } };\n  }\n  if (typeof value === 'object') {\n    return { mapValue: { fields: Object.fromEntries(Object.entries(value).map(([key, entry]) => [key, toFirestoreValue(entry)])) } };\n  }\n  return { stringValue: String(value) };\n}\n\nreturn items.map(item => {\n  const source = item.json || {};\n  const rawOutput = source.output ?? source.aiExtraction ?? null;\n  let parsedOutput = {};\n  if (typeof rawOutput === 'string') {\n    try {\n      parsedOutput = JSON.parse(rawOutput);\n    } catch (error) {\n      parsedOutput = { notes: `Unable to parse AI output: ${error.message}` };\n    }\n  } else if (rawOutput && typeof rawOutput === 'object') {\n    parsedOutput = rawOutput;\n  }\n  const messageId = source.message_id || source.messageId || 'unknown-message';\n  const firestoreEndpoint = `https://firestore.googleapis.com/v1/${collectionPath}?documentId=${encodeURIComponent(messageId)}`;\n  const aiFields = {};\n  if (parsedOutput && typeof parsedOutput === 'object') {\n    for (const [key, value] of Object.entries(parsedOutput)) {\n      if (['firestoreEndpoint','payload','pdfBase64','output'].includes(key)) {\n        continue;\n      }\n      aiFields[key] = toFirestoreValue(value);\n    }\n  }\n  return {\n    json: {\n      firestoreEndpoint,\n      payload: {\n        fields: {\n          messageId: { stringValue: messageId },\n          gmailAccount: { stringValue: source.gmail_account || source.gmailAccount || '' },\n          supplierHint: { stringValue: source.supplier_hint || source.supplierHint || '' },\n          subject: { stringValue: source.subject || '' },\n          runId: { stringValue: source.run_id || source.runId || '' },\n          processedAt: { timestampValue: new Date().toISOString() },\n          aiExtraction: { mapValue: { fields: aiFields } }\n        }\n      }\n    }\n  };\n});"
       },
       "id": "Function_Prepare_Firebase",
       "name": "Prepare Firebase Payload",
@@ -284,6 +259,71 @@
       "position": [
         2320,
         300
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "binaryToJson",
+        "setAllData": false,
+        "sourceKey": "data",
+        "destinationKey": "pdfBase64",
+        "options": {
+          "keepAsBase64": true,
+          "keepSource": false
+        }
+      },
+      "id": "Move_Binary_To_JSON",
+      "name": "PDF to Base64",
+      "type": "n8n-nodes-base.moveBinaryData",
+      "typeVersion": 1,
+      "position": [
+        1600,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "mode": "id",
+          "value": "={{$env.AI_AGENT_MODEL || 'gpt-4.1-mini'}}"
+        },
+        "options": {
+          "responseFormat": "json_object",
+          "temperature": 0,
+          "maxTokens": 2048
+        }
+      },
+      "id": "OpenAI_Model",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        1600,
+        40
+      ],
+      "credentials": {
+        "openAiApi": "OpenAI Account"
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "You are an expert accounts payable analyst. You receive Gmail metadata and a base64-encoded PDF invoice. Decode the PDF, extract reliable invoice details, and respond ONLY with a JSON object that matches this schema:\n{\n  \\\"messageId\\\": string,\n  \\\"gmailAccount\\\": string,\n  \\\"supplierHint\\\": string|null,\n  \\\"supplierName\\\": string|null,\n  \\\"invoiceNumber\\\": string|null,\n  \\\"invoiceDate\\\": string|null,\n  \\\"dueDate\\\": string|null,\n  \\\"currency\\\": string|null,\n  \\\"totalAmount\\\": number|null,\n  \\\"taxAmount\\\": number|null,\n  \\\"lineItems\\\": [\n    { \\\"description\\\": string|null, \\\"quantity\\\": number|null, \\\"unitPrice\\\": number|null, \\\"amount\\\": number|null }\n  ]\n}\nFill missing data with null. Use ISO 8601 dates when possible.\n\nEmail metadata:\n- Message ID: {{$json.messageId}}\n- Gmail Account: {{$json.gmailAccount}}\n- Supplier Hint: {{$json.supplierHint}}\n- Subject: {{$json.subject}}\n- Run ID: {{$json.runId}}\n\nInvoice PDF (base64): {{$json.pdfBase64}}\nIf the PDF cannot be parsed, still respond with the schema and null fields plus an explanatory \\\"notes\\\" string.",
+        "options": {
+          "systemMessage": "You are a meticulous invoice processing agent. Extract fields accurately and avoid hallucinations.",
+          "maxIterations": 8,
+          "returnIntermediateSteps": false,
+          "enableStreaming": false
+        },
+        "needsFallback": false
+      },
+      "id": "AI_Agent_Extract",
+      "name": "Extract Invoice with AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3,
+      "position": [
+        1840,
+        160
       ]
     }
   ],
@@ -409,25 +449,7 @@
       "main": [
         [
           {
-            "node": "Send to AI Agent",
-            "type": "main",
-            "index": 0
-          }
-        ],
-        [
-          {
-            "node": "Merge AI Response",
-            "type": "main",
-            "index": 1
-          }
-        ]
-      ]
-    },
-    "Send to AI Agent": {
-      "main": [
-        [
-          {
-            "node": "Merge AI Response",
+            "node": "PDF to Base64",
             "type": "main",
             "index": 0
           }
@@ -451,6 +473,46 @@
           {
             "node": "Store in Firebase",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PDF to Base64": {
+      "main": [
+        [
+          {
+            "node": "Extract Invoice with AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Merge AI Response",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Extract Invoice with AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Merge AI Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Extract Invoice with AI Agent",
+            "type": "ai_languageModel",
             "index": 0
           }
         ]
