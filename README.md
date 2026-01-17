@@ -5,6 +5,8 @@ This repository starts a monorepo that orchestrates invoice extraction from two 
 ## Repository layout
 
 ```text
+ansible/
+  playbooks/                             # Dockge + Llama 3.2 scaffold
 apps/
   n8n/
     workflows/
@@ -14,6 +16,7 @@ packages/
     suppliers.yaml                       # Shared supplier metadata
 ```
 
+- **ansible** – Ansible scaffolding to provision Dockge, Llama 3.2, and the LLM sandbox UI.
 - **apps/n8n/workflows** – contains importable workflows for n8n.
 - **packages/config** – holds shared configuration assets that can be reused across services.
 

@@ -1,0 +1,14 @@
+version: "3.8"
+services:
+  dockge:
+    image: "{{ dockge_image }}"
+    container_name: dockge
+    restart: unless-stopped
+    ports:
+      - "{{ dockge_http_port }}:5001"
+    environment:
+      DOCKGE_STACKS_DIR: "{{ dockge_stacks_dir }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - "{{ dockge_data_dir }}:/app/data"
+      - "{{ dockge_stacks_dir }}:{{ dockge_stacks_dir }}"
