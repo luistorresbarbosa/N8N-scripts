@@ -178,5 +178,5 @@ elements.chatInput.addEventListener("keydown", (event) => {
   }
 });
 
-addMessage("system", "MBUX AI Sandbox ready. Load models to begin.");
+addMessage("system", "LLM Sandbox ready. Load models to begin.");
 fetchModels();

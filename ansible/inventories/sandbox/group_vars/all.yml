@@ -28,8 +28,8 @@ openwebui_image: ghcr.io/open-webui/open-webui:latest
 
 llama_api_port: 11434
 openwebui_port: 3000
-mbux_ui_port: 8088
+llm_sandbox_ui_port: 8088
 
 llama_ollama_data_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/ollama"
 openwebui_data_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/openwebui"
-mbux_ui_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/mbux-ui"
+llm_sandbox_ui_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/llm-sandbox-ui"

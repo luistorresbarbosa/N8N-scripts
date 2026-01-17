@@ -17,19 +17,19 @@
       loop:
         - "{{ llama_ollama_data_dir }}"
         - "{{ openwebui_data_dir }}"
-        - "{{ mbux_ui_dir }}"
-        - "{{ mbux_ui_dir }}/site"
+        - "{{ llm_sandbox_ui_dir }}"
+        - "{{ llm_sandbox_ui_dir }}/site"
 
-    - name: Copy MBUX UI site assets
+    - name: Copy LLM sandbox UI site assets
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../files/mbux-webui/site/"
-        dest: "{{ mbux_ui_dir }}/site/"
+        src: "{{ playbook_dir }}/../files/llm-sandbox-webui/site/"
+        dest: "{{ llm_sandbox_ui_dir }}/site/"
         mode: "0644"
 
-    - name: Copy MBUX UI nginx config
+    - name: Copy LLM sandbox UI nginx config
       ansible.builtin.copy:
-        src: "{{ playbook_dir }}/../files/mbux-webui/nginx.conf"
-        dest: "{{ mbux_ui_dir }}/nginx.conf"
+        src: "{{ playbook_dir }}/../files/llm-sandbox-webui/nginx.conf"
+        dest: "{{ llm_sandbox_ui_dir }}/nginx.conf"
         mode: "0644"
 
     - name: Render Llama stack compose file

@@ -1,7 +1,7 @@
 # Ansible AI Sandbox
 
 This folder scaffolds an Ansible setup to provision a test server with Docker,
-Dockge, and a Llama 3.2 stack (Ollama + Open WebUI).
+Dockge, and a Llama 3.2 stack (Ollama + Open WebUI + LLM sandbox UI).
 
 ## What's included
 - Inventory for a sandbox host.
@@ -19,7 +19,7 @@ Dockge, and a Llama 3.2 stack (Ollama + Open WebUI).
 6. Open the UIs:
    - Dockge UI: `http://<server-ip>:5001`
    - Open WebUI: `http://<server-ip>:3000`
-   - MBUX Chat UI: `http://<server-ip>:8088`
+   - LLM Sandbox UI: `http://<server-ip>:8088`
 
 ## Notes
 - Rocky Linux uses the Docker CE repo; the bootstrap playbook configures it on
