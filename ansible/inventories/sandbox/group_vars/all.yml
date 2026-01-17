@@ -1,10 +1,17 @@
 ---
-ansible_user: ubuntu
+ansible_user: rocky
 ansible_become: true
 
-docker_packages:
-  - docker.io
-  - docker-compose-plugin
+docker_packages_map:
+  Debian:
+    - docker.io
+    - docker-compose-plugin
+  RedHat:
+    - docker-ce
+    - docker-ce-cli
+    - containerd.io
+    - docker-buildx-plugin
+    - docker-compose-plugin
 
 dockge_image: louislam/dockge:latest
 dockge_http_port: 5001
@@ -14,11 +21,15 @@ dockge_stacks_dir: /opt/stacks
 
 llama_stack_name: llama32
 llama_model: llama3.2
+llama_models:
+  - "{{ llama_model }}"
 ollama_image: ollama/ollama:latest
 openwebui_image: ghcr.io/open-webui/open-webui:latest
 
 llama_api_port: 11434
 openwebui_port: 3000
+mbux_ui_port: 8088
 
 llama_ollama_data_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/ollama"
 openwebui_data_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/openwebui"
+mbux_ui_dir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/mbux-ui"

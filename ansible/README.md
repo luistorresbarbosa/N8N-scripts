@@ -9,21 +9,23 @@ Dockge, and a Llama 3.2 stack (Ollama + Open WebUI).
 - Templates for Dockge and Llama stack compose files.
 
 ## Quick start
-1. Update the inventory in `inventories/sandbox/hosts.yml`.
-2. Adjust defaults in `inventories/sandbox/group_vars/all.yml`.
-3. Run the bootstrap playbook:
+1. `cd ansible`
+2. Update the inventory in `inventories/sandbox/hosts.yml`.
+3. Adjust defaults in `inventories/sandbox/group_vars/all.yml`.
+4. Run the bootstrap playbook:
    `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/bootstrap.yml`
-4. Deploy Llama 3.2:
+5. Deploy Llama 3.2:
    `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/deploy-llama.yml`
-5. Open the UIs:
+6. Open the UIs:
    - Dockge UI: `http://<server-ip>:5001`
    - Open WebUI: `http://<server-ip>:3000`
+   - MBUX Chat UI: `http://<server-ip>:8088`
 
 ## Notes
-- The bootstrap playbook installs Docker via apt. For non-Debian hosts, update
-  `docker_packages`.
+- Rocky Linux uses the Docker CE repo; the bootstrap playbook configures it on
+  RedHat-based hosts.
 - The Llama model is pulled with `ollama pull` and may take time.
-- Set `llama_model` to change the exact Llama 3.2 variant.
+- Set `llama_model` or `llama_models` to control which models are installed.
 - Secure the exposed ports (firewall, VPN, or reverse proxy) before use.
 - To run both steps:
   `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/site.yml`

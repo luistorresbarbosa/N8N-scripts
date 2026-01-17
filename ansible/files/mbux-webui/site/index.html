@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MBUX AI Sandbox</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="ambient"></div>
+    <div class="app">
+      <header class="app-header">
+        <div class="brand">
+          <span class="brand__mark"></span>
+          <div>
+            <div class="brand__title">MBUX AI Sandbox</div>
+            <div class="brand__subtitle">Ollama + Llama 3.2</div>
+          </div>
+        </div>
+        <div class="status">
+          <span id="statusBadge" class="status__badge status__badge--idle"></span>
+          <span id="statusText">Idle</span>
+        </div>
+      </header>
+
+      <main class="app-main">
+        <aside class="panel">
+          <div class="panel__section">
+            <label class="label" for="modelSelect">Model selector</label>
+            <div class="row">
+              <select id="modelSelect" class="select"></select>
+              <button id="refreshModels" class="button button--ghost" type="button">
+                Refresh
+              </button>
+            </div>
+            <div id="modelHint" class="hint"></div>
+          </div>
+
+          <div class="panel__section">
+            <label class="label" for="systemPrompt">System prompt</label>
+            <textarea
+              id="systemPrompt"
+              class="textarea"
+              rows="4"
+              placeholder="Optional guidance for the assistant."
+            ></textarea>
+          </div>
+
+          <div class="panel__section panel__section--compact">
+            <button id="clearChat" class="button button--ghost" type="button">
+              Clear chat
+            </button>
+          </div>
+
+          <div class="panel__section panel__section--compact">
+            <div class="chip">Dynamic models from Ollama</div>
+            <div class="hint">
+              Install new models with "ollama pull" and refresh.
+            </div>
+          </div>
+        </aside>
+
+        <section class="chat">
+          <div id="messages" class="messages"></div>
+          <form id="chatForm" class="composer">
+            <textarea
+              id="chatInput"
+              class="composer__input"
+              rows="2"
+              placeholder="Type a message. Shift+Enter for new line."
+            ></textarea>
+            <div class="composer__actions">
+              <span id="selectedModel" class="model-pill">Model: -</span>
+              <button id="sendButton" class="button button--primary" type="submit">
+                Send
+              </button>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

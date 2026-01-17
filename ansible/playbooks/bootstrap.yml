@@ -9,9 +9,36 @@
         cache_valid_time: 3600
       when: ansible_facts.os_family == "Debian"
 
+    - name: Install dnf plugin utilities (RedHat)
+      ansible.builtin.package:
+        name: dnf-plugins-core
+        state: present
+      when: ansible_facts.os_family == "RedHat"
+
+    - name: Add Docker CE repository (RedHat)
+      ansible.builtin.yum_repository:
+        name: docker-ce-stable
+        description: Docker CE Stable - $basearch
+        baseurl: "https://download.docker.com/linux/centos/$releasever/$basearch/stable"
+        gpgcheck: true
+        gpgkey: https://download.docker.com/linux/centos/gpg
+        enabled: true
+      when: ansible_facts.os_family == "RedHat"
+
+    - name: Update dnf cache (RedHat)
+      ansible.builtin.dnf:
+        update_cache: true
+      when: ansible_facts.os_family == "RedHat"
+
+    - name: Resolve Docker package list
+      ansible.builtin.set_fact:
+        docker_packages_resolved: >-
+          {{ docker_packages_map[ansible_facts.os_family]
+             | default(docker_packages_map['Debian']) }}
+
     - name: Install Docker packages
       ansible.builtin.package:
-        name: "{{ docker_packages }}"
+        name: "{{ docker_packages_resolved }}"
         state: present
 
     - name: Ensure Docker service is enabled and running

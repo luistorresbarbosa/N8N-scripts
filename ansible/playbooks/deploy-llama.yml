@@ -17,6 +17,20 @@
       loop:
         - "{{ llama_ollama_data_dir }}"
         - "{{ openwebui_data_dir }}"
+        - "{{ mbux_ui_dir }}"
+        - "{{ mbux_ui_dir }}/site"
+
+    - name: Copy MBUX UI site assets
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/mbux-webui/site/"
+        dest: "{{ mbux_ui_dir }}/site/"
+        mode: "0644"
+
+    - name: Copy MBUX UI nginx config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/mbux-webui/nginx.conf"
+        dest: "{{ mbux_ui_dir }}/nginx.conf"
+        mode: "0644"
 
     - name: Render Llama stack compose file
       ansible.builtin.template:
@@ -34,10 +48,7 @@
         or "Recreating" in llama_up.stdout
         or "Started" in llama_up.stdout
 
-    - name: Pull Llama 3.2 model
+    - name: Pull Llama models
       ansible.builtin.command:
-        cmd: docker exec "{{ llama_stack_name }}-ollama" ollama pull "{{ llama_model }}"
-      register: llama_pull
-      retries: 5
-      delay: 10
-      until: llama_pull.rc == 0
+        cmd: docker exec "{{ llama_stack_name }}-ollama" ollama pull "{{ item }}"
+      loop: "{{ llama_models }}"
