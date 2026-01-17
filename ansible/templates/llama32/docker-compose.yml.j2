@@ -1,0 +1,23 @@
+version: "3.8"
+services:
+  ollama:
+    image: "{{ ollama_image }}"
+    container_name: "{{ llama_stack_name }}-ollama"
+    restart: unless-stopped
+    ports:
+      - "{{ llama_api_port }}:11434"
+    volumes:
+      - "{{ llama_ollama_data_dir }}:/root/.ollama"
+
+  openwebui:
+    image: "{{ openwebui_image }}"
+    container_name: "{{ llama_stack_name }}-openwebui"
+    restart: unless-stopped
+    ports:
+      - "{{ openwebui_port }}:8080"
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - "{{ openwebui_data_dir }}:/app/backend/data"
+    depends_on:
+      - ollama

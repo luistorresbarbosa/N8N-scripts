@@ -1,0 +1,43 @@
+---
+- name: Deploy Llama 3.2 stack
+  hosts: ai_sandbox
+  become: true
+  tasks:
+    - name: Ensure Llama stack directory exists
+      ansible.builtin.file:
+        path: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure Llama data directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ llama_ollama_data_dir }}"
+        - "{{ openwebui_data_dir }}"
+
+    - name: Render Llama stack compose file
+      ansible.builtin.template:
+        src: llama32/docker-compose.yml.j2
+        dest: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Start Llama stack
+      ansible.builtin.command:
+        cmd: docker compose up -d
+        chdir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}"
+      register: llama_up
+      changed_when: >
+        "Creating" in llama_up.stdout
+        or "Recreating" in llama_up.stdout
+        or "Started" in llama_up.stdout
+
+    - name: Pull Llama 3.2 model
+      ansible.builtin.command:
+        cmd: docker exec "{{ llama_stack_name }}-ollama" ollama pull "{{ llama_model }}"
+      register: llama_pull
+      retries: 5
+      delay: 10
+      until: llama_pull.rc == 0
