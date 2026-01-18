@@ -1,0 +1,47 @@
+---
+- name: Deploy LLM sandbox UI
+  hosts: ai_sandbox
+  become: true
+  tasks:
+    - name: Ensure Llama stack directory exists
+      ansible.builtin.file:
+        path: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}"
+        state: directory
+        mode: "0755"
+
+    - name: Ensure LLM sandbox UI directories exist
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        mode: "0755"
+      loop:
+        - "{{ llm_sandbox_ui_dir }}"
+        - "{{ llm_sandbox_ui_dir }}/site"
+
+    - name: Copy LLM sandbox UI site assets
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/llm-sandbox-webui/site/"
+        dest: "{{ llm_sandbox_ui_dir }}/site/"
+        mode: "0644"
+
+    - name: Copy LLM sandbox UI nginx config
+      ansible.builtin.copy:
+        src: "{{ playbook_dir }}/../files/llm-sandbox-webui/nginx.conf"
+        dest: "{{ llm_sandbox_ui_dir }}/nginx.conf"
+        mode: "0644"
+
+    - name: Render Llama stack compose file
+      ansible.builtin.template:
+        src: llama32/docker-compose.yml.j2
+        dest: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}/docker-compose.yml"
+        mode: "0644"
+
+    - name: Start LLM sandbox UI
+      ansible.builtin.command:
+        cmd: docker compose up -d llm-sandbox-ui
+        chdir: "{{ dockge_stacks_dir }}/{{ llama_stack_name }}"
+      register: llm_ui_up
+      changed_when: >
+        "Creating" in llm_ui_up.stdout
+        or "Recreating" in llm_ui_up.stdout
+        or "Started" in llm_ui_up.stdout

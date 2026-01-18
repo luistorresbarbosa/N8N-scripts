@@ -16,6 +16,7 @@ Dockge, and a Llama 3.2 stack (Ollama + Open WebUI + LLM sandbox UI).
    `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/bootstrap.yml`
 5. Deploy Llama 3.2:
    `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/deploy-llama.yml`
+   (or UI-only: `ansible-playbook -i inventories/sandbox/hosts.yml playbooks/deploy-llm-sandbox-ui.yml`)
 6. Open the UIs:
    - Dockge UI: `http://<server-ip>:5001`
    - Open WebUI: `http://<server-ip>:3000`
